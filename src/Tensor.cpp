@@ -11,7 +11,7 @@
 namespace mllm {
 
 Tensor::Tensor(const int batch, const int head, const int sequence, const int dimension) :
-    host_ptr_(), capacity_(0) {
+    capacity_(0) {
     reshape(batch, head, sequence, dimension);
 }
 Tensor::Tensor(int batch, int head, int sequence, int dimension, Backend *bn, bool do_alloc) {
@@ -24,7 +24,7 @@ Tensor::Tensor(int batch, int head, int sequence, int dimension, Backend *bn, bo
 }
 
 Tensor::Tensor(const vector<int> &shape) :
-    host_ptr_(), capacity_(0) {
+    capacity_(0) {
     reshape(shape);
 }
 
@@ -47,12 +47,13 @@ void Tensor::alloc() {
         return;
     }
     if (allocated_ != count_) {
-        if (host_ptr_ != nullptr) {
-            backend_->free(host_ptr_);
-            host_ptr_ = nullptr;
+        if (data != nullptr) {
+            delete data;
+            data = nullptr;
         }
         if (count_ > 0) {
-            backend_->alloc(&host_ptr_, cntSize(), 8);
+            data = backend_->createMemory();
+            data->alloc(cntSize());
         }
         allocated_ = count_;
     }

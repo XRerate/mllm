@@ -2,7 +2,6 @@
 #define MLLM_OPENCL_MEMORY_SYSTEM_H
 
 #include "MemoryManager.hpp"
-#include "backends/opencl/OpenCLBackend.hpp"
 namespace mllm {
     class OpenCLSystemMemoryManager : public MemoryManager {
     public:

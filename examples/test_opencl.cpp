@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
     input1->setDataAt<float>(1, 0, 1, 0, 4.);
     
     input1->printData<float>();
+    input2->printData<float>();
 
     ex.run(&net, {input1, input2});
     auto result = ex.result()[0];

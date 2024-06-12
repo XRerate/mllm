@@ -15,8 +15,6 @@ OpenCLBackend::~OpenCLBackend() {
     cl_int ret;
     ret = clFlush(command_queue);
     ret = clFinish(command_queue);
-    // ret = clReleaseKernel(kernel);
-    // ret = clReleaseProgram(program);
     ret = clReleaseCommandQueue(command_queue);
     ret = clReleaseContext(context);
 }
@@ -28,7 +26,6 @@ void OpenCLBackend::initOpenCL() {
     ret = clGetPlatformIDs(1, &platform_id, &num_platforms);
     assert(ret == CL_SUCCESS);
     cl_uint num_devices;
-    cl_device_id device_id;
     ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &num_devices);
     assert(ret == CL_SUCCESS);
     context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
