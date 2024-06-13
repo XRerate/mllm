@@ -27,7 +27,7 @@ public:
     template <typename Dtype>
     Dtype *ptrAt(size_t offset) {
         deviceToHost(); // copy all
-        return static_cast<Dtype*>(host_ptr_) + offset*sizeof(Dtype);
+        return static_cast<Dtype*>(host_ptr_) + offset;
     }
     
     template <typename Dtype>

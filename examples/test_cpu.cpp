@@ -29,6 +29,8 @@ int main(int argc, char **argv) {
 
     shared_ptr<Tensor> input1 = std::make_shared<Tensor>(std::vector<int>{2,2,1,1}); // BSHD. Always need 4 dimensions
     shared_ptr<Tensor> input2 = std::make_shared<Tensor>(std::vector<int>{2,2,1,1});
+    input1->setDtype(MLLM_TYPE_F32);
+    input2->setDtype(MLLM_TYPE_F32);
     input1->setBackend(net.backends()[BackendType::MLLM_CPU].get());
     input2->setBackend(net.backends()[BackendType::MLLM_CPU].get());
     input1->alloc();
