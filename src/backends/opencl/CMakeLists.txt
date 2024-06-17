@@ -40,6 +40,12 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
+target_link_libraries(
+    MLLM_OPENCL
+    PRIVATE
+    dl
+)
+
 if(OpenMP_FOUND)
     message(STATUS "found openmp")
     if(ARM AND NOT APK)
