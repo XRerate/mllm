@@ -1,6 +1,10 @@
 #ifndef MLLM_OPENCLBACKEND_H
 #define MLLM_OPENCLBACKEND_H
 
+#ifndef CL_TARGET_OPENCL_VERSION
+#define CL_TARGET_OPENCL_VERSION 300
+#endif
+
 #include "Backend.hpp"
 #include "../../OpenCLMemory.hpp"
 #include "Op.hpp"
@@ -9,7 +13,7 @@
 #include <filesystem>
 
 namespace mllm {
-    
+
 class OpenCLBackend final : public Backend {
 public:
     explicit OpenCLBackend(shared_ptr<MemoryManager> &mm);
@@ -33,7 +37,7 @@ public:
     Memory *createMemory() override {
         return new OpenCLMemory(this);
     }
-    
+
     void alloc(void **ptr, size_t size, size_t alignment) override {
         cl_int ret;
         *ptr = clCreateBuffer(context, CL_MEM_READ_WRITE, size, NULL, &ret);
@@ -46,22 +50,21 @@ public:
 
     void copy(void *src, void *dst, size_t size) override {
         cl_int ret = clEnqueueCopyBuffer(command_queue, static_cast<cl_mem>(src), static_cast<cl_mem>(dst),
-            0, 0, size, 0, NULL, NULL);
+                                         0, 0, size, 0, NULL, NULL);
         assert(ret == CL_SUCCESS);
     }
     void deviceToHost(void *device_ptr, void *host_ptr, size_t offset, size_t size) override {
         char *host_ptr_offset = static_cast<char *>(host_ptr) + offset;
         cl_int ret = clEnqueueReadBuffer(command_queue, static_cast<cl_mem>(device_ptr),
-            CL_TRUE, offset, size, host_ptr_offset, 0, NULL, NULL);
+                                         CL_TRUE, offset, size, host_ptr_offset, 0, NULL, NULL);
         assert(ret == CL_SUCCESS);
     }
     void hostToDevice(void *host_ptr, void *device_ptr, size_t offset, size_t size) override {
         char *host_ptr_offset = static_cast<char *>(host_ptr) + offset;
         cl_int ret = clEnqueueWriteBuffer(command_queue, static_cast<cl_mem>(device_ptr),
-            CL_TRUE, offset, size, host_ptr_offset, 0, NULL, NULL);
+                                          CL_TRUE, offset, size, host_ptr_offset, 0, NULL, NULL);
         assert(ret == CL_SUCCESS);
     }
-
 
     Op *opCreate(const OpParam &op_param, string name, int threadCount) override;
     TensorFunction *funcCreate(const TensorFuncType type) override;
@@ -74,6 +77,7 @@ public:
     cl_context context;
     cl_command_queue command_queue;
     cl_device_id device_id;
+
 private:
     std::map<OpType, OpenCLBackend::Creator *> map_creator_;
     std::map<TensorFuncType, TensorFunction *> map_function_;

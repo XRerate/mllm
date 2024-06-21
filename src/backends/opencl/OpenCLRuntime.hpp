@@ -1,6 +1,10 @@
 #ifndef MLLM_BACKENDS_OPENCL_NET_H
 #define MLLM_BACKENDS_OPENCL_NET_H
 
+#ifndef CL_TARGET_OPENCL_VERSION
+#define CL_TARGET_OPENCL_VERSION 300
+#endif
+
 #include <CL/cl.h>
 #include <CL/cl_egl.h>
 #include <CL/cl_ext.h>
