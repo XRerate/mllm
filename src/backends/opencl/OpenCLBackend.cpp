@@ -13,24 +13,24 @@ OpenCLBackend::OpenCLBackend(shared_ptr<MemoryManager> &mm) :
 
 OpenCLBackend::~OpenCLBackend() {
     cl_int ret;
-    ret = clFlush(command_queue);
-    ret = clFinish(command_queue);
-    ret = clReleaseCommandQueue(command_queue);
-    ret = clReleaseContext(context);
+    ret = opencl::clFlush(command_queue);
+    ret = opencl::clFinish(command_queue);
+    ret = opencl::clReleaseCommandQueue(command_queue);
+    ret = opencl::clReleaseContext(context);
 }
 
 void OpenCLBackend::initOpenCL() {
     cl_int ret;
     cl_uint num_platforms;
     cl_platform_id platform_id;
-    ret = clGetPlatformIDs(1, &platform_id, &num_platforms);
+    ret = opencl::clGetPlatformIDs(1, &platform_id, &num_platforms);
     assert(ret == CL_SUCCESS);
     cl_uint num_devices;
-    ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &num_devices);
+    ret = opencl::clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &num_devices);
     assert(ret == CL_SUCCESS);
-    context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
+    context = opencl::clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
     assert(ret == CL_SUCCESS);
-    command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
+    command_queue = opencl::clCreateCommandQueue(context, device_id, 0, &ret);
     assert(ret == CL_SUCCESS);
 }
 
@@ -57,7 +57,7 @@ TensorFunction *OpenCLBackend::funcCreate(const TensorFuncType type) {
     return iter->second;
 }
 
-void OpenCLBackend::registerFuncs() {
+void OpenCLBackend::registerFuncs(){
     // map_function_[TensorFuncType::FUNC_ADD] = new OpenCLaddFunction();
 };
 

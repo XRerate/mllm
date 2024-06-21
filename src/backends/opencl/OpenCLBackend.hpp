@@ -9,7 +9,8 @@
 #include "../../OpenCLMemory.hpp"
 #include "Op.hpp"
 #include "Types.hpp"
-#include "CL/cl.h"
+//#include "CL/cl.h"
+#include "OpenCLRuntime.hpp"
 #include <filesystem>
 
 namespace mllm {
@@ -40,29 +41,29 @@ public:
 
     void alloc(void **ptr, size_t size, size_t alignment) override {
         cl_int ret;
-        *ptr = clCreateBuffer(context, CL_MEM_READ_WRITE, size, NULL, &ret);
+        *ptr = opencl::clCreateBuffer(context, CL_MEM_READ_WRITE, size, NULL, &ret);
         assert(ret == CL_SUCCESS);
     }
     void free(void *ptr) override {
-        cl_int ret = clReleaseMemObject(static_cast<cl_mem>(ptr));
+        cl_int ret = opencl::clReleaseMemObject(static_cast<cl_mem>(ptr));
         assert(ret == CL_SUCCESS);
     }
 
     void copy(void *src, void *dst, size_t size) override {
-        cl_int ret = clEnqueueCopyBuffer(command_queue, static_cast<cl_mem>(src), static_cast<cl_mem>(dst),
-                                         0, 0, size, 0, NULL, NULL);
+        cl_int ret = opencl::clEnqueueCopyBuffer(command_queue, static_cast<cl_mem>(src), static_cast<cl_mem>(dst),
+                                                 0, 0, size, 0, NULL, NULL);
         assert(ret == CL_SUCCESS);
     }
     void deviceToHost(void *device_ptr, void *host_ptr, size_t offset, size_t size) override {
         char *host_ptr_offset = static_cast<char *>(host_ptr) + offset;
-        cl_int ret = clEnqueueReadBuffer(command_queue, static_cast<cl_mem>(device_ptr),
-                                         CL_TRUE, offset, size, host_ptr_offset, 0, NULL, NULL);
+        cl_int ret = opencl::clEnqueueReadBuffer(command_queue, static_cast<cl_mem>(device_ptr),
+                                                 CL_TRUE, offset, size, host_ptr_offset, 0, NULL, NULL);
         assert(ret == CL_SUCCESS);
     }
     void hostToDevice(void *host_ptr, void *device_ptr, size_t offset, size_t size) override {
         char *host_ptr_offset = static_cast<char *>(host_ptr) + offset;
-        cl_int ret = clEnqueueWriteBuffer(command_queue, static_cast<cl_mem>(device_ptr),
-                                          CL_TRUE, offset, size, host_ptr_offset, 0, NULL, NULL);
+        cl_int ret = opencl::clEnqueueWriteBuffer(command_queue, static_cast<cl_mem>(device_ptr),
+                                                  CL_TRUE, offset, size, host_ptr_offset, 0, NULL, NULL);
         assert(ret == CL_SUCCESS);
     }
 

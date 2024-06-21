@@ -1,4 +1,4 @@
-# CPU Backend
+# OpenCL Backend
 file(GLOB MLLM_OPENCL_SRC
         ${CMAKE_CURRENT_LIST_DIR}/*.cpp
         ${CMAKE_CURRENT_LIST_DIR}/*.hpp
@@ -13,12 +13,12 @@ else()
     message(FATAL_ERROR "openmp not found!")
 endif()
 
-find_package(OpenCL REQUIRED)
-if(OpenCL_FOUND)
-    message(STATUS "found opencl")
-else()
-    message(FATAL_ERROR "opencl not found!")
-endif()
+#find_package(OpenCL REQUIRED)
+#if(OpenCL_FOUND)
+#    message(STATUS "found opencl")
+#else()
+#    message(FATAL_ERROR "opencl not found!")
+#endif()
 
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm" OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
     message(STATUS "ARM detected")
@@ -52,11 +52,9 @@ if(OpenMP_FOUND)
         message(STATUS "[ARM]  found openmp")
         target_compile_options(MLLM_OPENCL PRIVATE -fopenmp)
         target_link_libraries(MLLM_OPENCL PUBLIC -fopenmp -static-openmp)
-        target_link_libraries(MLLM_OPENCL PUBLIC OpenCL::OpenCL)
     else()
     target_link_libraries(MLLM_OPENCL
             PUBLIC
-            OpenMP::OpenMP_CXX 
-            OpenCL::OpenCL)
+            OpenMP::OpenMP_CXX)
     endif()
 endif()

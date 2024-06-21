@@ -8,14 +8,14 @@ namespace mllm {
 
 class OpenCLOp : public Op {
 public:
-    OpenCLOp(Backend *bn, std::string opName, std::string kernelSourceFilePath) : 
+    OpenCLOp(Backend *bn, std::string opName, std::string kernelSourceFilePath) :
         Op(bn, opName), kernelSourceFilePath(kernelSourceFilePath) {
         createKernel();
     }
 
     ~OpenCLOp() {
-        clReleaseKernel(kernel_);
-        clReleaseProgram(program_);
+        opencl::clReleaseKernel(kernel_);
+        opencl::clReleaseProgram(program_);
     }
 
 protected:
@@ -31,18 +31,17 @@ protected:
 
         std::cout << (currentDir / kernelSourceFilePath).string() << std::endl;
         std::ifstream kernelFile((currentDir / kernelSourceFilePath).string());
-        assert (kernelFile.is_open());
+        assert(kernelFile.is_open());
         std::string kernelSource((std::istreambuf_iterator<char>(kernelFile)), std::istreambuf_iterator<char>());
         const char *kernelSourceChar = kernelSource.c_str();
         size_t kernelSize = kernelSource.size();
         cl_int ret;
-        program_ = clCreateProgramWithSource(opencl_bn->context, 1, (const char **)&kernelSourceChar, (const size_t *)&kernelSize, &ret);
-        ret = clBuildProgram(program_, 1, &opencl_bn->device_id, NULL, NULL, NULL);
+        program_ = opencl::clCreateProgramWithSource(opencl_bn->context, 1, (const char **)&kernelSourceChar, (const size_t *)&kernelSize, &ret);
+        ret = opencl::clBuildProgram(program_, 1, &opencl_bn->device_id, NULL, NULL, NULL);
         assert(ret == CL_SUCCESS);
-        kernel_ = clCreateKernel(program_, "add", &ret);
+        kernel_ = opencl::clCreateKernel(program_, "add", &ret);
         assert(ret == CL_SUCCESS);
     }
-
 };
 
 } // namespace mllm
