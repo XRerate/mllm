@@ -8,9 +8,8 @@ namespace mllm {
 
 class OpenCLOp : public Op {
 public:
-    OpenCLOp(Backend *bn, std::string opName, std::string kernelSourceFilePath) :
-        Op(bn, opName), kernelSourceFilePath(kernelSourceFilePath) {
-        createKernel();
+    OpenCLOp(Backend *bn, std::string opName) :
+        Op(bn, opName) {
     }
 
     ~OpenCLOp() {
@@ -18,30 +17,28 @@ public:
         opencl::clReleaseProgram(program_);
     }
 
-protected:
-    cl_program program_;
-    cl_kernel kernel_;
-
-    std::string kernelSourceFilePath;
+    virtual const char *getSrc() = 0;
 
     void createKernel() {
         // TODO: Remove dynamic_cast
         OpenCLBackend *opencl_bn = dynamic_cast<OpenCLBackend *>(backend());
-        std::filesystem::path currentDir = std::filesystem::path(__FILE__).parent_path();
 
-        std::cout << (currentDir / kernelSourceFilePath).string() << std::endl;
-        std::ifstream kernelFile((currentDir / kernelSourceFilePath).string());
-        assert(kernelFile.is_open());
-        std::string kernelSource((std::istreambuf_iterator<char>(kernelFile)), std::istreambuf_iterator<char>());
-        const char *kernelSourceChar = kernelSource.c_str();
-        size_t kernelSize = kernelSource.size();
+        const char *kernelSource = getSrc();
+        std::cout << kernelSource << std::endl;
+
+        size_t kernelSize = strlen(kernelSource);
+        std::cout << kernelSize << std::endl;
         cl_int ret;
-        program_ = opencl::clCreateProgramWithSource(opencl_bn->context, 1, (const char **)&kernelSourceChar, (const size_t *)&kernelSize, &ret);
+        program_ = opencl::clCreateProgramWithSource(opencl_bn->context, 1, (const char **)&kernelSource, (const size_t *)&kernelSize, &ret);
         ret = opencl::clBuildProgram(program_, 1, &opencl_bn->device_id, NULL, NULL, NULL);
         assert(ret == CL_SUCCESS);
         kernel_ = opencl::clCreateKernel(program_, "add", &ret);
         assert(ret == CL_SUCCESS);
     }
+
+protected:
+    cl_program program_;
+    cl_kernel kernel_;
 };
 
 } // namespace mllm

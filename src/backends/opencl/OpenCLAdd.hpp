@@ -7,11 +7,18 @@ namespace mllm {
 
 class OpenCLAdd final : public OpenCLOp {
 public:
-    OpenCLAdd(Backend *bn, string opName): OpenCLOp(bn, opName, "backends/opencl/OpenCLAdd.cl") {}
+    OpenCLAdd(Backend *bn, string opName) :
+        OpenCLOp(bn, opName) {
+    }
     virtual ~OpenCLAdd() = default;
     virtual ErrorCode reshape(vector<shared_ptr<Tensor>> inputs, vector<shared_ptr<Tensor>> outputs) override;
     virtual ErrorCode execute(vector<shared_ptr<Tensor>> inputs, vector<shared_ptr<Tensor>> outputs) override;
 
+    const char *getSrc() override {
+        return
+#include "backends/opencl/OpenCLAdd.cl"
+            ;
+    }
 
 private:
     int thread_count = 4;
@@ -20,7 +27,10 @@ private:
 class OpenCLAddCreator : public OpenCLBackend::Creator {
 public:
     virtual Op *create(OpParam op_param, Backend *bn, string name, int threadCount) const {
-        return new OpenCLAdd(bn, name);
+        OpenCLOp *op = new OpenCLAdd(bn, name);
+        // TODO(seonjunn): this is lame
+        op->createKernel();
+        return op;
     }
 };
 

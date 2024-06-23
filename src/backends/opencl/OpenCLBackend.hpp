@@ -25,6 +25,7 @@ public:
         virtual Op *create(OpParam op_param, Backend *bn, string, int threadCount) const = 0;
     };
     bool addCreator(OpType t, Creator *c) {
+        // TODO(yankee624) : 질질
         if (map_creator_.find(t) != map_creator_.end()) {
             printf("Error: %d type has be added\n", t);
             return false;

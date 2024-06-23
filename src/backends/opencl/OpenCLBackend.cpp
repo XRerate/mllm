@@ -6,6 +6,7 @@
 namespace mllm {
 OpenCLBackend::OpenCLBackend(shared_ptr<MemoryManager> &mm) :
     Backend(mm) {
+    assert(opencl::LoadOpenCL() == true);
     initOpenCL();
     registerOps();
     registerFuncs();
