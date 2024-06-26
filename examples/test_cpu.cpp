@@ -27,8 +27,8 @@ int main(int argc, char **argv) {
     Executor ex(&param_loader);
     // ex.setup(&net);
 
-    shared_ptr<Tensor> input1 = std::make_shared<Tensor>(std::vector<int>{2,2,1,1}); // BSHD. Always need 4 dimensions
-    shared_ptr<Tensor> input2 = std::make_shared<Tensor>(std::vector<int>{2,2,1,1});
+    shared_ptr<Tensor> input1 = std::make_shared<Tensor>(std::vector<int>{2, 2, 1, 1}); // BSHD. Always need 4 dimensions
+    shared_ptr<Tensor> input2 = std::make_shared<Tensor>(std::vector<int>{2, 2, 1, 1});
     input1->setDtype(MLLM_TYPE_F32);
     input2->setDtype(MLLM_TYPE_F32);
     input1->setBackend(net.backends()[BackendType::MLLM_CPU].get());
@@ -39,8 +39,14 @@ int main(int argc, char **argv) {
     input1->setDataAt<float>(0, 0, 1, 0, 2.);
     input1->setDataAt<float>(1, 0, 0, 0, 3.);
     input1->setDataAt<float>(1, 0, 1, 0, 4.);
-    
+
+    input2->setDataAt<float>(0, 0, 0, 0, 10.);
+    input2->setDataAt<float>(0, 0, 1, 0, 20.);
+    input2->setDataAt<float>(1, 0, 0, 0, 30.);
+    input2->setDataAt<float>(1, 0, 1, 0, 40.);
+
     input1->printData<float>();
+    input2->printData<float>();
 
     ex.run(&net, {input1, input2});
     auto result = ex.result()[0];
