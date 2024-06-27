@@ -2,15 +2,25 @@
 #define MLLM_CPUBACKEND_H
 
 #include "Backend.hpp"
+#include "../../CPUMemory.hpp"
 #include "Op.hpp"
 #include "Types.hpp"
 #include "quantize/Quantize.hpp"
 
 namespace mllm {
+
 class CPUBackend final : public Backend {
 public:
     explicit CPUBackend(shared_ptr<MemoryManager> &mm);
     ~CPUBackend() override = default;
+
+    Memory *createMemory() override {
+        return new CPUMemory(this);
+    }
+
+    void copy(void *src, void *dst, size_t size) override {
+        memcpy(dst, src, size);
+    }
 
     class Creator {
     public:

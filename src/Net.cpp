@@ -1,27 +1,35 @@
 #include "Net.hpp"
 #include "memory/SystemMemoryManager.hpp"
+#include "memory/OpenCLSystemMemoryManager.hpp"
 #include "Op.hpp"
 #include "Types.hpp"
 #include "backends/cpu/CPUBackend.hpp"
+#include "backends/opencl/OpenCLBackend.hpp"
 #include <vector>
 
 namespace mllm {
 
 shared_ptr<CPUBackend> cpuBn;
+shared_ptr<OpenCLBackend> openclBn;
 
 Net::Net(BackendConfig config){
     shared_ptr<MemoryManager> mm = nullptr;
+    shared_ptr<MemoryManager> mm_opencl = nullptr;
     switch (config.memory) {
     case BackendConfig::Memory_High:
         mm = std::make_shared<SystemMemoryManager>();
+        mm_opencl = std::make_shared<OpenCLSystemMemoryManager>();
         break;
     default:
         mm = std::make_shared<SystemMemoryManager>();
+        mm_opencl = std::make_shared<OpenCLSystemMemoryManager>();
         break;
     }
 
     cpuBn.reset(new CPUBackend(mm));
     backends_.emplace(BackendType::MLLM_CPU,  cpuBn);
+    openclBn.reset(new OpenCLBackend(mm_opencl));
+    backends_.emplace(BackendType::MLLM_OPENCL, openclBn);
 }
 
 void Net::convert(vector<NetParameter> &param, BackendType backend_type, int threadCount) {

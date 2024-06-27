@@ -2,6 +2,7 @@
 #define MLLM_TENSOR_H
 #include <climits>
 #include "Backend.hpp"
+#include "Memory.hpp"
 #include <iostream>
 #include <cstdio>
 #include <iomanip>
@@ -57,15 +58,15 @@ class Backend;
 class Tensor {
 public:
     Tensor() :
-        host_ptr_(), capacity_(0), dtype_(MLLM_TYPE_F32) {
+        capacity_(0), dtype_(MLLM_TYPE_F32) {
     }
     Tensor(Backend *bn) :
-        backend_(bn), host_ptr_(), capacity_(0), dtype_(MLLM_TYPE_F32) {
+        backend_(bn), capacity_(0), dtype_(MLLM_TYPE_F32) {
     }
     ~Tensor() {
-        if (host_ptr_ != nullptr && masterTensor() == nullptr && !aggregated_&& gph_.find(name_) == gph_.end()) {
-            backend_->free(host_ptr_);
-            host_ptr_ = nullptr;
+        if (data != nullptr && masterTensor() == nullptr && !aggregated_&& gph_.find(name_) == gph_.end()) {
+            delete data;
+            data = nullptr;
         }
     }
     static map<string, Tensor> gph_;
@@ -81,8 +82,7 @@ private:
     TensorType ttype_ = NORMAL_TENSOR;
 
     Backend *backend_{};
-    void *host_ptr_{};
-    void *device_ptr_{}; // not used for CPU
+    Memory *data{};
     vector<int> shape_;
     int capacity_{};
     int count_{};
@@ -150,9 +150,9 @@ public:
      */
     void free() {
         if (aggregated_) { return; }
-        if (host_ptr_ != nullptr && masterTensor() == nullptr) {
-            backend_->free(host_ptr_);
-            host_ptr_ = nullptr;
+        if (data != nullptr && masterTensor() == nullptr) {
+            delete data;
+            data = nullptr;
             allocated_ = 0;
         }
     }
@@ -346,7 +346,15 @@ public:
      */
     template <typename Dtype>
     Dtype *hostPtr() const {
-        return (Dtype *)host_ptr_;
+        return (Dtype *)data->host_ptr();
+    }
+
+    void *devicePtr() const {
+        return data->device_ptr();
+    }
+
+    Memory *dataPtr() const {
+        return data;
     }
 
     /**
@@ -361,7 +369,7 @@ public:
     template <typename Dtype>
     Dtype dataAt(const int batch, const int head, const int sequence, const int dimension) {
         if (!aggregated_) {
-            return ((Dtype *)host_ptr_)[offset(batch, head, sequence, dimension)];
+            return data->dataAt<Dtype>(offset(batch, head, sequence, dimension));
         } else {
             int b = batch;
             int h = head;
@@ -394,7 +402,7 @@ public:
     template <typename Dtype>
     Dtype *ptrAt(const int batch, const int head, const int sequence, const int dimension) {
         if (!aggregated_) {
-            return ((Dtype *)host_ptr_ + offset(batch, head, sequence, dimension));
+            return data->ptrAt<Dtype>(offset(batch, head, sequence, dimension));
         } else {
             int b = batch;
             int h = head;
@@ -427,8 +435,7 @@ public:
     template <typename Dtype>
     void setDataAt(const int batch, const int head, const int sequence, const int dimension, Dtype value) {
         if (!aggregated_) {
-            Dtype *typed_ptr = static_cast<Dtype *>(host_ptr_);
-            typed_ptr[offset(batch, head, sequence, dimension)] = value;
+            data->setDataAt<Dtype>(offset(batch, head, sequence, dimension), value);
         } else {
             int b = batch;
             int h = head;
@@ -646,7 +653,7 @@ public:
         assert(masterTensor() == nullptr);
         assert(source.dtype() == dtype());
         assert(source.count() == count());
-        memcpy(host_ptr_, source.host_ptr_, cntSize());
+        source.data->copyTo(data, cntSize());
     }
     void initFrom(const Tensor &source) {
         dtype_ = source.dtype();
@@ -654,7 +661,7 @@ public:
         ctype_ = source.ctype_;
         shape_ = source.shape_;
         count_ = source.count_;
-        if(source.host_ptr_!= nullptr) {
+        if(source.data!= nullptr) {
             alloc();
         }
     }
@@ -662,7 +669,7 @@ public:
         assert(masterTensor() == nullptr);
         assert(source->dtype() == dtype());
         assert(source->count() == count());
-        memcpy(host_ptr_, source->host_ptr_, cntSize());
+        source->data->copyTo(data, cntSize());
     }
 
     map<string, Tensor> getGraph() {
@@ -828,7 +835,7 @@ public:
             child_tensors_[0]->reshape(b, c, t, h, w);
             trans_copy_shape(child_tensors_[0]->shape());
         }
-        host_ptr_ = source->hostPtr<void>();
+        data = source->data;
         capacity_ = source->capacity_;
         count_ = source->count_;
         if (copyshape) {
@@ -1047,18 +1054,17 @@ public:
     template <typename Dtype>
     Dtype dataAt(const int batch, const int channel, const int time, const int height, const int width)  {
         assert(ctype_ == BCTHW || ctype_ == BTHWC);
-        return ((Dtype *)host_ptr_)[offset(batch, channel, time, height, width)];
+        return data->dataAt<Dtype>(offset(batch, channel, time, height, width));
     }
     template <typename Dtype>
     Dtype *ptrAt(const int batch, const int channel, const int time, const int height, const int width) {
         assert(ctype_ == BCTHW || ctype_ == BTHWC);
-        return ((Dtype *)host_ptr_ + offset(batch, channel, time, height, width));
+        return data->ptrAt<Dtype>(offset(batch, channel, time, height, width));
     }
     template <typename Dtype>
     void setDataAt(const int batch, const int channel, const int time, const int height, const int width, Dtype value) {
         assert(ctype_ == BCTHW || ctype_ == BTHWC);
-        Dtype *typed_ptr = static_cast<Dtype *>(host_ptr_);
-        typed_ptr[offset(batch, channel, time, height, width)] = value;
+        data->setDataAt<Dtype>(offset(batch, channel, time, height, width), value);
     }
 
 
@@ -1370,7 +1376,7 @@ public:
     template <typename Dtype>
     void printMem() {
         for (int i = 0; i < count_; ++i) {
-            auto *typed_ptr = static_cast<Dtype *>(host_ptr_);
+            auto *typed_ptr = data->ptrAt<Dtype>(0);
             std::cout << std::fixed << std::setprecision(7) << typed_ptr[i] << " ";
         }
     }

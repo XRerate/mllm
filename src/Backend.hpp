@@ -1,6 +1,7 @@
 #ifndef MLLM_BACKEND_H
 #define MLLM_BACKEND_H
 
+#include "Memory.hpp"
 #include "MemoryManager.hpp"
 #include "OpDefined.hpp"
 #include "Types.hpp"
@@ -11,8 +12,7 @@ namespace mllm {
 class Op;
 
 class Tensor;
-class Backend;
-
+class Memory;
 
 
 
@@ -34,7 +34,7 @@ public:
      * \param size The size of the memory to be allocated.
      * \param alignment The alignment of the memory to be allocated.
      */
-    void alloc(void **ptr, size_t size, size_t alignment) {
+    virtual void alloc(void **ptr, size_t size, size_t alignment) {
         mem_manager_->alloc(ptr, size, alignment);
     }
 
@@ -42,9 +42,14 @@ public:
      * \brief Frees the memory pointed to by ptr.
      * \param ptr A pointer to the memory to be freed.
      */
-    void free(void *ptr) {
+    virtual void free(void *ptr) {
         mem_manager_->free(ptr);
     }
+
+    virtual Memory *createMemory() = 0;
+    virtual void copy(void *src, void *dst, size_t size) = 0;
+    virtual void deviceToHost(void *device_ptr, void *host_ptr, size_t offset, size_t size) {};
+    virtual void hostToDevice(void *host_ptr, void *device_ptr, size_t offset, size_t size) {};
 
     /**
      * \brief Creates an operation(Op) with the given parameters.

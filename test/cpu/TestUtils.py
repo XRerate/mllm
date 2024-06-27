@@ -1,6 +1,6 @@
 import os
 import struct
-from typing import BinaryIO
+from typing import BinaryIO, Dict
 
 import torch
 import platform
@@ -154,7 +154,7 @@ class TestSaver(TestIO):
 
 
 class TestBase:
-    tensors_map: dict[str, torch.Tensor]
+    tensors_map: Dict[str, torch.Tensor]
 
     def __init__(self):
         print(self.__class__.__name__)
